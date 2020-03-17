@@ -6,6 +6,8 @@ use tokio::prelude::*;
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 
 use std::fs::File;
+use std::thread::sleep;
+use std::time;
 use std::sync::Mutex;
 
 #[cfg(target_os = "linux")]
@@ -75,12 +77,18 @@ impl Broadcaster {
             ..Default::default()
         }).unwrap();
 
+        let mut count = 0;
         std::thread::spawn(move || loop {
-            let mut f = File::open("../../jpeg/risa_001.jpg").unwrap();
+            count += 1;
+            let path = format!("../../jpeg/risa_{:03}.jpg", count);
+            let mut f = File::open(&path).unwrap();
+            if count == 603 { count = 0; }
             let mut buf = Vec::new();
             f.read_to_end(&mut buf).unwrap();
             let msg = Broadcaster::make_message_block(&buf);
             me.lock().unwrap().send_image(&msg);
+            let wait_ms = time::Duration::from_millis(33);
+            sleep(wait_ms);
         });
     }
 }
