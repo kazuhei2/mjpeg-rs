@@ -5,6 +5,7 @@ use actix_web::Error;
 use tokio::prelude::*;
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 
+use std::fs::File;
 use std::sync::Mutex;
 
 #[cfg(target_os = "linux")]
@@ -75,9 +76,10 @@ impl Broadcaster {
         }).unwrap();
 
         std::thread::spawn(move || loop {
-            let frame = camera.capture().unwrap();
-
-            let msg = Broadcaster::make_message_block(&frame);
+            let mut f = File::open("../../jpeg/risa_001.jpg").unwrap();
+            let mut buf = Vec::new();
+            f.read_to_end(&mut buf).unwrap();
+            let msg = Broadcaster::make_message_block(&buf);
             me.lock().unwrap().send_image(&msg);
         });
     }
