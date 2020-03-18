@@ -6,10 +6,9 @@ use tokio::prelude::*;
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 
 use std::fs::File;
+use std::sync::Mutex;
 use std::thread::sleep;
 use std::time;
-use std::sync::Mutex;
-
 
 /// Hold clients channels
 pub struct Broadcaster {
@@ -67,9 +66,11 @@ impl Broadcaster {
         let mut count = 0;
         std::thread::spawn(move || loop {
             count += 1;
-            let path = format!("../../jpeg/risa_{:03}.jpg", count);
+            let path = format!("jpeg/risa_{:03}.jpg", count);
             let mut f = File::open(&path).unwrap();
-            if count == 603 { count = 0; }
+            if count == 603 {
+                count = 0;
+            }
             let mut buf = Vec::new();
             f.read_to_end(&mut buf).unwrap();
             let msg = Broadcaster::make_message_block(&buf);
