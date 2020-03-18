@@ -1,5 +1,3 @@
-use structopt::StructOpt;
-
 use actix_web::web::Data;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 
@@ -12,28 +10,10 @@ use std::sync::Mutex;
 mod broadcaster;
 use broadcaster::Broadcaster;
 
-#[derive(Debug, StructOpt)]
-#[structopt(name = "mjpeg-rs")]
-struct Opt {
-    #[structopt(short, long, default_value = "320")]
-    width: u32,
-
-    #[structopt(short, long, default_value = "180")]
-    height: u32,
-
-    #[structopt(short, long, default_value = "30")]
-    fps: u64,
-}
-
-
 fn main() {
     env_logger::init();
 
-    let opt = Opt::from_args();
-
-    info!("{:?}", opt);
-
-    let data = Broadcaster::create(opt.width, opt.height, opt.fps);
+    let data = Broadcaster::create();
 
     HttpServer::new(move || {
         App::new()

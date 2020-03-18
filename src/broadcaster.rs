@@ -22,23 +22,19 @@ impl Broadcaster {
         }
     }
 
-    pub fn create(width: u32, height: u32, fps: u64) -> Data<Mutex<Self>> {
+    pub fn create() -> Data<Mutex<Self>> {
         // Data ≃ Arc
         let me = Data::new(Mutex::new(Broadcaster::new()));
-
-        Broadcaster::spawn_capture(me.clone(), width, height, fps);
-
+        Broadcaster::spawn_capture(me.clone());
         me
     }
 
     pub fn new_client(&mut self) -> Client {
         let (tx, rx) = channel(100);
-
         self.clients.push(tx);
         Client(rx)
     }
 
-    #[cfg(target_os = "linux")]
     fn make_message_block(frame: &[u8]) -> Vec<u8> {
         let mut msg = format!(
             "--boundarydonotcross\r\nContent-Length:{}\r\nContent-Type:image/jpeg\r\n\r\n",
@@ -53,7 +49,6 @@ impl Broadcaster {
         let mut ok_clients = Vec::new();
         for client in self.clients.iter() {
             let result = client.clone().try_send(Bytes::from(&msg[..]));
-
             if let Ok(()) = result {
                 ok_clients.push(client.clone());
             }
@@ -61,8 +56,7 @@ impl Broadcaster {
         self.clients = ok_clients;
     }
 
-    #[cfg(target_os = "linux")]
-    fn spawn_capture(me: Data<Mutex<Self>>, width: u32, height: u32, fps: u64) {
+    fn spawn_capture(me: Data<Mutex<Self>>) {
         let mut count = 0;
         std::thread::spawn(move || loop {
             count += 1;
