@@ -10,10 +10,6 @@ use std::thread::sleep;
 use std::time;
 use std::sync::Mutex;
 
-#[cfg(target_os = "linux")]
-use rscam;
-
-use image;
 
 /// Hold clients channels
 pub struct Broadcaster {
@@ -68,15 +64,6 @@ impl Broadcaster {
 
     #[cfg(target_os = "linux")]
     fn spawn_capture(me: Data<Mutex<Self>>, width: u32, height: u32, fps: u64) {
-        let mut camera = rscam::new("/dev/video0").unwrap();
-
-        camera.start(&rscam::Config {
-            interval: (1, fps as u32), // 30 fps
-            resolution: (width, height),
-            format: b"MJPG",
-            ..Default::default()
-        }).unwrap();
-
         let mut count = 0;
         std::thread::spawn(move || loop {
             count += 1;
