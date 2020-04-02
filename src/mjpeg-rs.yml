@@ -1,0 +1,13 @@
+name: mjpeg-rs
+version: "0.1.0"
+about: test
+author: Kazuhei Hamada
+
+settings:
+    - ArgRequiredElseHelp
+
+args:
+    - IP_PORT:
+        help: Sets the IP to bind
+        required: true
+        index: 1
