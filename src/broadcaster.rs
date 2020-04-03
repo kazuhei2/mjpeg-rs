@@ -1,12 +1,15 @@
-use actix_web::error::ErrorInternalServerError;
 use actix_web::web::{Bytes, Data};
 use actix_web::Error;
 
-use tokio::prelude::*;
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 
+use futures::Stream;
+
 use std::fs::File;
+use std::io::prelude::*;
+use std::pin::Pin;
 use std::sync::Mutex;
+use std::task::{Context, Poll};
 use std::thread::sleep;
 use std::time;
 
@@ -78,10 +81,13 @@ impl Broadcaster {
 pub struct Client(Receiver<Bytes>);
 
 impl Stream for Client {
-    type Item = Bytes;
-    type Error = Error;
+    type Item = Result<Bytes, Error>;
 
-    fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
-        self.0.poll().map_err(ErrorInternalServerError)
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        match Pin::new(&mut self.0).poll_next(cx) {
+            Poll::Ready(Some(v)) => Poll::Ready(Some(Ok(v))),
+            Poll::Ready(None) => Poll::Ready(None),
+            Poll::Pending => Poll::Pending,
+        }
     }
 }

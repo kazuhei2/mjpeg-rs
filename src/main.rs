@@ -1,5 +1,5 @@
-use actix_web::web::Data;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use actix_web::web::Data;
 
 #[macro_use]
 extern crate log;
@@ -13,7 +13,8 @@ use std::sync::Mutex;
 mod broadcaster;
 use broadcaster::Broadcaster;
 
-fn main() {
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
     let yaml = load_yaml!("mjpeg-rs.yml");
     let matches = clap::App::from_yaml(yaml).get_matches();
 
@@ -26,17 +27,16 @@ fn main() {
 
     HttpServer::new(move || {
         App::new()
-            .register_data(data.clone())
+            .app_data(data.clone())
             .route("/", web::get().to(index))
             .route("/streaming", web::get().to(new_client))
     })
-    .bind(ip_port)
-    .expect("Unable to bind port")
+    .bind(ip_port)?
     .run()
-    .unwrap();
+    .await
 }
 
-fn index() -> impl Responder {
+async fn index() -> impl Responder {
     let content = include_str!("index.html");
 
     HttpResponse::Ok()
@@ -45,7 +45,7 @@ fn index() -> impl Responder {
 }
 
 /// Register a new client and return a response
-fn new_client(broadcaster: Data<Mutex<Broadcaster>>) -> impl Responder {
+async fn new_client(broadcaster: Data<Mutex<Broadcaster>>) -> impl Responder {
     info!("new_client...");
     let rx = broadcaster.lock().unwrap().new_client();
 
