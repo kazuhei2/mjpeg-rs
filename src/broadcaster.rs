@@ -25,7 +25,7 @@ impl Broadcaster {
     pub fn create() -> Data<Mutex<Self>> {
         // Data ≃ Arc
         let me = Data::new(Mutex::new(Broadcaster::new()));
-        Broadcaster::spawn_capture(me.clone());
+        Broadcaster::spawn_boundary(me.clone());
         me
     }
 
@@ -56,7 +56,7 @@ impl Broadcaster {
         self.clients = ok_clients;
     }
 
-    fn spawn_capture(me: Data<Mutex<Self>>) {
+    fn spawn_boundary(me: Data<Mutex<Self>>) {
         let mut count = 0;
         std::thread::spawn(move || loop {
             count += 1;
@@ -69,8 +69,7 @@ impl Broadcaster {
             f.read_to_end(&mut buf).unwrap();
             let msg = Broadcaster::make_message_block(&buf);
             me.lock().unwrap().send_image(&msg);
-            let wait_ms = time::Duration::from_millis(33);
-            sleep(wait_ms);
+            sleep(time::Duration::from_millis(33));
         });
     }
 }
